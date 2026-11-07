@@ -75,12 +75,15 @@ class CodeAnalyzer:
         ]
 
         # Identify potentially unused imports.
-        results["unused_imports"] = sorted({
-            item["local_name"]
+        results["unused_imports"] = [
+            {
+                "name": item["local_name"],
+                "line": item["line"]
+            }
             for item in visitor.imports
             if not item["star_import"]
             and item["local_name"] not in visitor.used_names
-        })
+        ]
 
         results["max_nesting"] = self._calculate_nesting(tree)
 

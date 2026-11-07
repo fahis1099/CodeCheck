@@ -1,4 +1,3 @@
-
 import json
 from pathlib import Path
 
@@ -13,7 +12,10 @@ class ReportGenerator:
             "syntax": syntax_result,
             "statistics": {
                 "total_imports": len(analysis_result["imports"]),
-                "unused_imports": analysis_result["unused_imports"],
+                "unused_imports": [
+                    item["name"]
+                    for item in analysis_result["unused_imports"]
+                ],
                 "total_functions": len(analysis_result["functions"]),
                 "total_classes": len(analysis_result["classes"]),
                 "total_loops": analysis_result["loops"],
@@ -35,10 +37,11 @@ class ReportGenerator:
             })
 
         # Add unused import findings
-        for name in analysis_result["unused_imports"]:
+        for item in analysis_result["unused_imports"]:
             report["findings"].append({
                 "severity": "WARNING",
-                "message": f"Unused import: {name}"
+                "message": f"Unused import: {item['name']}",
+                "line": item["line"]
             })
 
         return report
@@ -84,10 +87,15 @@ class ReportGenerator:
                 )
 
                 if "line" in finding:
-                    lines.append(
-                        f"Line: {finding['line']}, "
-                        f"Column: {finding['column']}"
-                    )
+                    if "column" in finding:
+                        lines.append(
+                            f"Line: {finding['line']}, "
+                            f"Column: {finding['column']}"
+                        )
+                    else:
+                        lines.append(
+                            f"Line: {finding['line']}"
+                        )
         else:
             lines.append("No issues detected.")
 

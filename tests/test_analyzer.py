@@ -69,8 +69,12 @@ def calculate(a, b):
     analyzer = CodeAnalyzer()
     result = analyzer.analyze(source)
 
-    assert "os" in result["unused_imports"]
-    assert "math" not in result["unused_imports"]
+    unused_names = [
+        item["name"] for item in result["unused_imports"]
+    ]
+
+    assert "os" in unused_names
+    assert "math" not in unused_names
 
 
 def test_aliased_import_detection():
@@ -85,6 +89,7 @@ def calculate(value):
 
     assert result["unused_imports"] == []
 
+
 def test_module_attribute_import_is_used():
     source = """
 import math
@@ -95,9 +100,13 @@ def calculate():
     analyzer = CodeAnalyzer()
     result = analyzer.analyze(source)
 
-    assert "math" not in result["unused_imports"]
-    
-    
+    unused_names = [
+        item["name"] for item in result["unused_imports"]
+    ]
+
+    assert "math" not in unused_names
+
+
 def test_import_used_inside_function():
     source = """
 import os
@@ -108,7 +117,11 @@ def get_path():
     analyzer = CodeAnalyzer()
     result = analyzer.analyze(source)
 
-    assert "os" not in result["unused_imports"]
+    unused_names = [
+        item["name"] for item in result["unused_imports"]
+    ]
+
+    assert "os" not in unused_names
 
 
 def test_multiple_imports():
@@ -121,9 +134,13 @@ def calculate():
     analyzer = CodeAnalyzer()
     result = analyzer.analyze(source)
 
-    assert "math" not in result["unused_imports"]
-    assert "os" in result["unused_imports"]
-    assert "json" in result["unused_imports"]
+    unused_names = [
+        item["name"] for item in result["unused_imports"]
+    ]
+
+    assert "math" not in unused_names
+    assert "os" in unused_names
+    assert "json" in unused_names
 
 
 def test_from_import_used():
@@ -149,8 +166,12 @@ def calculate():
     analyzer = CodeAnalyzer()
     result = analyzer.analyze(source)
 
-    assert "pow" in result["unused_imports"]
-    assert "sqrt" not in result["unused_imports"]
+    unused_names = [
+        item["name"] for item in result["unused_imports"]
+    ]
+
+    assert "pow" in unused_names
+    assert "sqrt" not in unused_names
 
 
 def test_star_import_is_not_reported_as_unused():
@@ -176,7 +197,28 @@ def calculate():
     analyzer = CodeAnalyzer()
     result = analyzer.analyze(source)
 
+    unused_names = [
+        item["name"] for item in result["unused_imports"]
+    ]
+
     assert len(result["imports"]) == 3
-    assert "math" not in result["unused_imports"]
-    assert "os" in result["unused_imports"]
-    assert "json" in result["unused_imports"]
+    assert "math" not in unused_names
+    assert "os" in unused_names
+    assert "json" in unused_names
+
+
+def test_unused_import_line_number():
+    source = """import os
+
+def calculate():
+    return 10
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    unused_import = next(
+        item for item in result["unused_imports"]
+        if item["name"] == "os"
+    )
+
+    assert unused_import["line"] == 1

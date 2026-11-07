@@ -11,7 +11,7 @@ def test_report_generation():
 
     analysis_result = {
         "imports": ["os", "math"],
-        "unused_imports": ["os"],
+        "unused_imports": [{"name": "os", "line": 1}],
         "functions": ["calculate"],
         "classes": ["Student"],
         "loops": 1,
@@ -71,3 +71,36 @@ def test_text_report_saving(tmp_path):
 
     assert file_path.exists()
     assert file_path.suffix == ".txt"
+
+def test_unused_import_line_in_report():
+    generator = ReportGenerator()
+
+    syntax_result = {
+        "valid": True,
+        "error": None
+    }
+
+    analysis_result = {
+        "imports": ["os"],
+        "unused_imports": [
+            {"name": "os", "line": 1}
+        ],
+        "functions": [],
+        "classes": [],
+        "loops": 0,
+        "conditions": 0,
+        "max_nesting": 0
+    }
+
+    report = generator.generate_report(
+        "example.py",
+        syntax_result,
+        analysis_result
+    )
+
+    assert report["findings"][0]["line"] == 1
+
+    text = generator.generate_text_report(report)
+
+    assert "Unused import: os" in text
+    assert "Line: 1" in text
