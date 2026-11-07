@@ -222,3 +222,66 @@ def calculate():
     )
 
     assert unused_import["line"] == 1
+
+
+def test_mutable_list_default_detection():
+    source = """
+def add_item(item, items=[]):
+    items.append(item)
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["mutable_defaults"] == [
+        {"name": "items", "line": 2}
+    ]
+
+
+def test_mutable_dict_default_detection():
+    source = """
+def create_user(config={}):
+    pass
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["mutable_defaults"] == [
+        {"name": "config", "line": 2}
+    ]
+
+
+def test_mutable_default_function_call_detection():
+    source = """
+def process(items=list()):
+    pass
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["mutable_defaults"] == [
+        {"name": "items", "line": 2}
+    ]
+
+
+def test_immutable_default_not_reported():
+    source = """
+def calculate(value=10, name="Fahis", data=None):
+    pass
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["mutable_defaults"] == []
+
+
+def test_async_function_mutable_default():
+    source = """
+async def process(items=[]):
+    pass
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["mutable_defaults"] == [
+        {"name": "items", "line": 2}
+    ]

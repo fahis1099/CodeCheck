@@ -44,6 +44,7 @@ def main():
             analysis_result = {
                 "imports": [],
                 "unused_imports": [],
+                "mutable_defaults": [],
                 "functions": [],
                 "classes": [],
                 "loops": 0,

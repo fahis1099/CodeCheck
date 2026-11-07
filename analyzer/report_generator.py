@@ -1,3 +1,4 @@
+
 import json
 from pathlib import Path
 
@@ -20,6 +21,9 @@ class ReportGenerator:
                 "total_classes": len(analysis_result["classes"]),
                 "total_loops": analysis_result["loops"],
                 "total_conditions": analysis_result["conditions"],
+                "mutable_defaults": len(
+                    analysis_result["mutable_defaults"]
+                ),
                 "maximum_nesting": analysis_result["max_nesting"]
             },
             "findings": []
@@ -41,6 +45,16 @@ class ReportGenerator:
             report["findings"].append({
                 "severity": "WARNING",
                 "message": f"Unused import: {item['name']}",
+                "line": item["line"]
+            })
+
+        # Add mutable default argument findings
+        for item in analysis_result["mutable_defaults"]:
+            report["findings"].append({
+                "severity": "WARNING",
+                "message": (
+                    f"Mutable default argument: {item['name']}"
+                ),
                 "line": item["line"]
             })
 
