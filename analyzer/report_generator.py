@@ -24,6 +24,12 @@ class ReportGenerator:
                 "mutable_defaults": len(
                     analysis_result["mutable_defaults"]
                 ),
+                "bare_except": len(
+                    analysis_result["bare_except"]
+                ),
+                "none_comparisons": len(
+                    analysis_result["none_comparisons"]
+                ),
                 "maximum_nesting": analysis_result["max_nesting"]
             },
             "findings": []
@@ -54,6 +60,25 @@ class ReportGenerator:
                 "severity": "WARNING",
                 "message": (
                     f"Mutable default argument: {item['name']}"
+                ),
+                "line": item["line"]
+            })
+
+        # Add bare except findings
+        for item in analysis_result["bare_except"]:
+            report["findings"].append({
+                "severity": "WARNING",
+                "message": "Bare except clause detected",
+                "line": item["line"]
+            })
+
+        # Add None comparison findings
+        for item in analysis_result["none_comparisons"]:
+            report["findings"].append({
+                "severity": "WARNING",
+                "message": (
+                    "Use 'is None' or 'is not None' instead of "
+                    "equality comparison"
                 ),
                 "line": item["line"]
             })

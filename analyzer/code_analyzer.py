@@ -96,6 +96,48 @@ class MutableDefaultVisitor(ast.NodeVisitor):
         return False
 
 
+class BareExceptVisitor(ast.NodeVisitor):
+    """Detects bare except clauses."""
+
+    def __init__(self):
+        self.findings = []
+
+    def visit_ExceptHandler(self, node):
+
+        # A bare except has no specified exception type.
+        if node.type is None:
+            self.findings.append({
+                "line": node.lineno
+            })
+
+        self.generic_visit(node)
+
+
+class NoneComparisonVisitor(ast.NodeVisitor):
+    """Detects comparisons using == None or != None."""
+
+    def __init__(self):
+        self.findings = []
+
+    def visit_Compare(self, node):
+
+        for operator, comparator in zip(
+            node.ops,
+            node.comparators
+        ):
+
+            if (
+                isinstance(operator, (ast.Eq, ast.NotEq))
+                and isinstance(comparator, ast.Constant)
+                and comparator.value is None
+            ):
+                self.findings.append({
+                    "line": node.lineno
+                })
+
+        self.generic_visit(node)
+
+
 class CodeAnalyzer:
     """Analyzes the structure of Python source code."""
 
@@ -107,6 +149,8 @@ class CodeAnalyzer:
             "imports": [],
             "unused_imports": [],
             "mutable_defaults": [],
+            "bare_except": [],
+            "none_comparisons": [],
             "functions": [],
             "classes": [],
             "loops": 0,
@@ -119,6 +163,12 @@ class CodeAnalyzer:
 
         mutable_visitor = MutableDefaultVisitor()
         mutable_visitor.visit(tree)
+
+        bare_except_visitor = BareExceptVisitor()
+        bare_except_visitor.visit(tree)
+
+        none_visitor = NoneComparisonVisitor()
+        none_visitor.visit(tree)
 
         for node in ast.walk(tree):
 
@@ -152,6 +202,12 @@ class CodeAnalyzer:
 
         # Identify mutable default arguments.
         results["mutable_defaults"] = mutable_visitor.findings
+
+        # Identify bare except clauses.
+        results["bare_except"] = bare_except_visitor.findings
+
+        # Identify comparisons using == None or != None.
+        results["none_comparisons"] = none_visitor.findings
 
         results["max_nesting"] = self._calculate_nesting(tree)
 

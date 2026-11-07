@@ -45,6 +45,8 @@ def main():
                 "imports": [],
                 "unused_imports": [],
                 "mutable_defaults": [],
+                "bare_except": [],
+                "none_comparisons": [],
                 "functions": [],
                 "classes": [],
                 "loops": 0,

@@ -285,3 +285,99 @@ async def process(items=[]):
     assert result["mutable_defaults"] == [
         {"name": "items", "line": 2}
     ]
+
+
+def test_bare_except_detection():
+    source = """
+try:
+    result = 10 / 0
+except:
+    print("Error")
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["bare_except"] == [
+        {"line": 4}
+    ]
+
+
+def test_specific_exception_not_reported():
+    source = """
+try:
+    result = 10 / 0
+except ZeroDivisionError:
+    print("Cannot divide by zero")
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["bare_except"] == []
+
+
+def test_multiple_bare_except_detection():
+    source = """
+try:
+    pass
+except:
+    pass
+
+try:
+    pass
+except:
+    pass
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["bare_except"] == [
+        {"line": 4},
+        {"line": 9}
+    ]
+
+def test_none_equality_comparison():
+    source = """
+if value == None:
+    print("Empty")
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["none_comparisons"] == [
+        {"line": 2}
+    ]
+
+
+def test_none_inequality_comparison():
+    source = """
+if value != None:
+    print("Not empty")
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["none_comparisons"] == [
+        {"line": 2}
+    ]
+
+
+def test_is_none_not_reported():
+    source = """
+if value is None:
+    print("Empty")
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["none_comparisons"] == []
+
+
+def test_is_not_none_not_reported():
+    source = """
+if value is not None:
+    print("Not empty")
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["none_comparisons"] == []
