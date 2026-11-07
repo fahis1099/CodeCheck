@@ -1,26 +1,29 @@
+# CodeCheck
 
-# CodeCheck – Python Code Analysis Tool
+CodeCheck is a lightweight Python static code analysis tool. It reads Python source files, checks syntax, analyzes code structure, identifies selected code quality issues, and generates text and JSON reports.
 
-CodeCheck is a Python-based static code analysis tool designed to
-inspect Python source files and identify basic code quality issues.
+The project is built with Python's Abstract Syntax Tree (AST) module. It analyzes source code without executing it.
 
 ## Features
 
-- Python source file reading
-- Syntax validation using Python AST
-- Detection of imports and functions
-- Detection of classes and loops
-- Conditional statement analysis
-- Nested control structure analysis
+- **File validation:** Reads Python files and checks file paths and encoding.
+- **Syntax checking:** Detects Python syntax errors and reports their line and column.
+- **Import analysis:** Lists imports and identifies potentially unused imports.
+- **Code structure analysis:** Counts functions, classes, loops, and conditional statements.
+- **Nesting analysis:** Calculates the maximum nesting depth of control structures.
+- **Mutable default detection:** Flags list, dictionary, and set defaults in function definitions, including calls such as `list()`, `dict()`, and `set()`.
+- **Exception handling check:** Detects bare `except:` clauses.
+- **None comparison check:** Flags comparisons using `== None` or `!= None`; use `is None` or `is not None` instead.
+- **Report generation:** Creates readable TXT and structured JSON reports.
 
-## Technologies Used
+## Technologies
 
 - Python
-- Abstract Syntax Tree (AST)
-- Pytest
-- Git and GitHub
+- Abstract Syntax Tree (`ast`)
+- argparse
+- pytest
 
-## Project Structure
+## Project structure
 
 ```text
 CodeCheck/
@@ -31,35 +34,45 @@ CodeCheck/
 │   ├── code_analyzer.py
 │   └── report_generator.py
 ├── tests/
+│   ├── __init__.py
+│   ├── test_analyzer.py
+│   ├── test_cli.py
+│   └── test_report_generator.py
 ├── sample_files/
+│   ├── example.py
+│   └── invalid_example.py
 ├── main.py
 ├── requirements.txt
-├── README.md
-└── .gitignore
+├── pytest.ini
+└── README.md
 ```
 
-## Installation
+## Getting started
 
-Clone the repository:
+### 1. Clone the repository
 
 ```bash
-git clone YOUR_REPOSITORY_URL
+git clone https://github.com/fahis1099/CodeCheck.git
 cd CodeCheck
 ```
 
-Create a virtual environment:
+### 2. Create and activate a virtual environment
 
-```bash
-python -m venv venv
-```
-
-Activate it on Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
+python -m venv venv
 .\venv\Scripts\Activate.ps1
 ```
 
-Install dependencies:
+macOS / Linux:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -67,132 +80,74 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the application:
+Analyze the default sample file:
 
 ```bash
 python main.py
 ```
 
-## Testing
-
-Run automated tests:
+Analyze a specific Python file:
 
 ```bash
-pytest -v
+python main.py path/to/your_file.py
 ```
 
-## Project Status
+Choose a report output directory:
 
-Currently under development.
+```bash
+python main.py path/to/your_file.py --output-dir my_reports
+```
+
+After analysis, CodeCheck prints a text summary and saves two files in the selected output directory:
+
+- `analysis_report.txt`
+- `analysis_report.json`
+
+If no output directory is specified, reports are saved in `reports/`.
+
+### Command-line exit codes
+
+| Exit code | Meaning |
+|---|---|
+| `0` | File has valid Python syntax |
+| `1` | Python syntax error detected |
+| `2` | File or input error, such as a missing file or unsupported encoding |
+
+## Example checks
+
+CodeCheck reports these patterns:
+
+```python
+import os  # Potentially unused import
+
+def add_item(item, items=[]):  # Mutable default argument
+    try:
+        return items + [item]
+    except:  # Bare except clause
+        return None
+
+if item == None:  # Prefer: item is None
+    print("No item")
+```
+
+The import usage and selected code quality checks are heuristic AST-based checks. They are not a complete replacement for a production-grade linter or type checker.
+
+## Running tests
+
+Run the complete test suite from the project root:
+
+```bash
+python -m pytest -v
+```
+
+The current test suite contains **40 tests** covering the analyzer, command-line behavior, and report generation.
+
+## Current scope
+
+CodeCheck is a learning-focused static analysis project. It currently checks selected syntax and code quality patterns. It does not execute analyzed files, modify source code, or provide a complete security audit.
 
 ## Author
 
-Mohammed Fahis M
+**Mohammed Fahis M**
 
-GitHub: https://github.com/fahis1099
-
-LinkedIn: https://linkedin.com/in/mohammed-fahis
-```
-
-Note: This README describes the current implemented features and planned report generation separately. We'll update it as development progresses.
-
-# Step 4 – Initialize Git
-
-Open the VS Code terminal in your CodeCheck directory.
-
-Check Git:
-
-```powershell
-git --version
-```
-
-Initialize the repository:
-
-```powershell
-git init
-```
-
-Configure your identity if you haven't already:
-
-```powershell
-git config --global user.name "Mohammed Fahis"
-git config --global user.email "fahis1099@gmail.com"
-```
-
-Check the files:
-
-```powershell
-git status
-```
-
-# Step 5 – First commit
-
-Add all project files:
-
-```powershell
-git add .
-```
-
-Create your first commit:
-
-```powershell
-git commit -m "Initial project setup with file reader and syntax checker"
-```
-
-A commit is a snapshot of your project at a particular point in development.
-
-# Step 6 – Connect GitHub
-
-Copy the HTTPS repository URL from the GitHub repository you created.
-
-It should look like:
-
-```text
-https://github.com/fahis1099/CodeCheck.git
-```
-
-Run:
-
-```powershell
-git branch -M main
-
-git remote add origin https://github.com/fahis1099/CodeCheck.git
-
-git push -u origin main
-```
-
-VS Code or Git Credential Manager may ask you to authenticate with GitHub.
-
----
-
-# Our Git workflow from now on
-
-Whenever we complete a major feature, we'll create a meaningful commit.
-
-| Development stage | Commit message |
-|---|---|
-| Initial setup | `Initial project setup` |
-| Syntax checker | `Implement Python syntax validation` |
-| Code analyzer | `Add AST-based code analysis` |
-| Unused imports | `Add unused import detection` |
-| Reports | `Implement code quality report generation` |
-| Testing | `Add automated unit tests` |
-| Documentation | `Update project documentation` |
-
-This will demonstrate incremental development rather than uploading the entire project in one commit.
-
-## Your task now
-
-Complete Steps 1–6.
-
-<box border radius="lg" padding={3} gap={2}>
-  **GitHub setup checklist**
-  {@body const items=["Created public CodeCheck repository","Created .gitignore","Created README.md","Initialized local Git repository","Created initial commit","Successfully pushed to GitHub"]}
-  {@body const [checks,setChecks]=DIL.useState(items.map(()=>false))}
-  {#each items as item,i}
-    <checkbox checked={checks[i]} onChange={v=>setChecks(old=>old.map((x,j)=>i===j?v:x))}>{item}</checkbox>
-  {/each}
-  <text color="secondary" size="xs">{checks.filter(Boolean).length} of 6 completed</text>
-</box>
-
-**Send me your GitHub repository link once you've pushed it.** I'll review the repository structure and README before we continue building the Code Analyzer.
+- GitHub: [fahis1099](https://github.com/fahis1099)
