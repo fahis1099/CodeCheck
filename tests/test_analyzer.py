@@ -84,3 +84,70 @@ def calculate(value):
     result = analyzer.analyze(source)
 
     assert result["unused_imports"] == []
+
+def test_module_attribute_import_is_used():
+    source = """
+import math
+
+def calculate():
+    return math.sqrt(25)
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert "math" not in result["unused_imports"]
+    
+    
+def test_import_used_inside_function():
+    source = """
+import os
+
+def get_path():
+    return os.getcwd()
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert "os" not in result["unused_imports"]
+
+
+def test_multiple_imports():
+    source = """
+import os, math, json
+
+def calculate():
+    return math.sqrt(25)
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert "math" not in result["unused_imports"]
+    assert "os" in result["unused_imports"]
+    assert "json" in result["unused_imports"]
+
+
+def test_from_import_used():
+    source = """
+from math import sqrt
+
+def calculate():
+    return sqrt(25)
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["unused_imports"] == []
+
+
+def test_from_import_unused():
+    source = """
+from math import sqrt, pow
+
+def calculate():
+    return sqrt(25)
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert "pow" in result["unused_imports"]
+    assert "sqrt" not in result["unused_imports"]
