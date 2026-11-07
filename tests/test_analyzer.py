@@ -151,3 +151,32 @@ def calculate():
 
     assert "pow" in result["unused_imports"]
     assert "sqrt" not in result["unused_imports"]
+
+
+def test_star_import_is_not_reported_as_unused():
+    source = """
+from math import *
+
+def calculate():
+    return sqrt(25)
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert result["unused_imports"] == []
+
+
+def test_import_statistics_preserve_multiple_imports():
+    source = """
+import os, math, json
+
+def calculate():
+    return math.sqrt(25)
+"""
+    analyzer = CodeAnalyzer()
+    result = analyzer.analyze(source)
+
+    assert len(result["imports"]) == 3
+    assert "math" not in result["unused_imports"]
+    assert "os" in result["unused_imports"]
+    assert "json" in result["unused_imports"]

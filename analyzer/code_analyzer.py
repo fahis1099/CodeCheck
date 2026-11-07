@@ -2,6 +2,39 @@
 import ast
 
 
+class ImportUsageVisitor(ast.NodeVisitor):
+    """Collects import declarations and referenced names."""
+
+    def __init__(self):
+        self.imports = []
+        self.used_names = set()
+
+    def visit_Import(self, node):
+        for alias in node.names:
+            name = alias.asname or alias.name.split(".")[0]
+
+            self.imports.append({
+                "name": alias.name,
+                "local_name": name,
+                "line": node.lineno,
+                "star_import": False
+            })
+
+    def visit_ImportFrom(self, node):
+        for alias in node.names:
+            is_star = alias.name == "*"
+
+            self.imports.append({
+                "name": alias.name,
+                "local_name": alias.asname or alias.name,
+                "line": node.lineno,
+                "star_import": is_star
+            })
+
+    def visit_Name(self, node):
+        self.used_names.add(node.id)
+
+
 class CodeAnalyzer:
     """Analyzes the structure of Python source code."""
 
@@ -19,66 +52,35 @@ class CodeAnalyzer:
             "max_nesting": 0
         }
 
-        imported_names = set()
-        used_names = set()
+        visitor = ImportUsageVisitor()
+        visitor.visit(tree)
 
         for node in ast.walk(tree):
 
-            # Detect regular imports
-            if isinstance(node, ast.Import):
-
-                for alias in node.names:
-
-                    results["imports"].append(alias.name)
-
-                    if alias.asname:
-                        imported_names.add(alias.asname)
-                    else:
-                        imported_names.add(alias.name.split(".")[0])
-
-            # Detect from-import statements
-            elif isinstance(node, ast.ImportFrom):
-
-                for alias in node.names:
-
-                    if alias.name == "*":
-                        continue
-
-                    results["imports"].append(alias.name)
-
-                    imported_names.add(
-                        alias.asname if alias.asname else alias.name
-                    )
-
-            # Detect variable and name references
-            elif isinstance(node, ast.Name):
-
-                used_names.add(node.id)
-
-            # Detect functions
-            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 results["functions"].append(node.name)
 
-            # Detect classes
             elif isinstance(node, ast.ClassDef):
-
                 results["classes"].append(node.name)
 
-            # Detect loops
             elif isinstance(node, (ast.For, ast.While)):
-
                 results["loops"] += 1
 
-            # Detect conditions
             elif isinstance(node, ast.If):
-
                 results["conditions"] += 1
 
-        # Identify unused imports
-        results["unused_imports"] = sorted(
-            imported_names - used_names
-        )
+        # Preserve the existing imports output format.
+        results["imports"] = [
+            item["name"] for item in visitor.imports
+        ]
+
+        # Identify potentially unused imports.
+        results["unused_imports"] = sorted({
+            item["local_name"]
+            for item in visitor.imports
+            if not item["star_import"]
+            and item["local_name"] not in visitor.used_names
+        })
 
         results["max_nesting"] = self._calculate_nesting(tree)
 
@@ -91,13 +93,10 @@ class CodeAnalyzer:
         for child in ast.iter_child_nodes(node):
 
             if isinstance(child, (ast.If, ast.For, ast.While)):
-
                 child_depth = self._calculate_nesting(
                     child, depth + 1
                 )
-
             else:
-
                 child_depth = self._calculate_nesting(
                     child, depth
                 )
